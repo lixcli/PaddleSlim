@@ -8,11 +8,6 @@ repos:
         files: \.(md|yml)$
     -   id: remove-tabs
         files: \.(md|yml)$
--   repo: https://github.com/PaddlePaddle/mirrors-yapf.git
-    rev: v0.16.2
-    hooks:
-    -   id: yapf
-        files: (.*\.(py|bzl)|BUILD|.*\.BUILD|WORKSPACE)$
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

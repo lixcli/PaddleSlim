@@ -56,12 +56,24 @@ class UniformObserver(BaseObserver):
     def qmin_qmax(self):
         """ Calculate the range of the quantized integer based on the specified
         quant_bits, sign, and symmetric properties."""
-        if self._sign:
-            self._qmin = -2**(self.bit_length() - 1)
-            self._qmax = 2**(self.bit_length() - 1) - 1
+        if isinstance(self._quant_bits, tuple):
+            if self._quant_bits[0] == 4 and self._quant_bits[1] == 3 and len(self._quant_bits) == 2:
+                self._qmin = -448.0
+                self._qmax = 448.0
+            elif self._quant_bits[0] == 5 and self._quant_bits[1] == 2 and len(self._quant_bits) == 2:
+                self._qmin = -57344.0
+                self._qmax = 57344.0
+            else:
+                raise NotImplementedError(
+                    "Currently, only float8_e4m3 and float8_e5m2 formats are supported. Please set quant_bits to (4,3) or (5,2) for the corresponding format."
+                )
         else:
-            self._qmin = 0
-            self._qmax = 2**self.bit_length()
+            if self._sign:
+                self._qmin = -(2 ** (self.bit_length() - 1))
+                self._qmax = 2 ** (self.bit_length() - 1) - 1
+            else:
+                self._qmin = 0
+                self._qmax = 2 ** self.bit_length()
         return self._qmin, self._qmax
 
     @abc.abstractmethod
@@ -95,7 +107,12 @@ class UniformObserver(BaseObserver):
             else:
                 self._zero_point = (_qmax + _qmin) / 2
         else:
-            self._scale = (_max - _min) / float(_qmax - _qmin)
-            self._zero_point = _qmin - round(_min / self._scale)
-            self._zero_point = np.clip(self._zero_point, _qmin, _qmax)
+            if not isinstance(self._quant_bits, tuple):
+                self._scale = (_max - _min) / float(_qmax - _qmin)
+                self._zero_point = _qmin - round(_min / self._scale)
+                self._zero_point = np.clip(self._zero_point, _qmin, _qmax)
+            else:
+                raise NotImplementedError(
+                    "Currently, only support symmetric quantization for fp8"
+                )
         return self._scale, self._zero_point
