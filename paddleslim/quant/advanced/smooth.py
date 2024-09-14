@@ -187,14 +187,14 @@ class Smooth():
             if type(sub_layer) == ShiftSmoothHelpLayer:
                 ln_name = layer_name
             if ln_name is not None:
-                act_abs_max = self.scale_dict[ln_name].cast("float16")
-                sampled_input = self.sampled_inputs[ln_name].cast("float16")
+                act_abs_max = self.scale_dict[ln_name]
+                sampled_input = self.sampled_inputs[ln_name]
                 for param in sub_layer.parameters(include_sublayers=False):
                     if 'w_0' in param.name:
                         # weight = param.cast("float32")
                         if self.search_function is not None:
                             s = self.search_function.search(
-                                layer_name, sampled_input, act_abs_max, param.cast("float16"))
+                                layer_name, sampled_input.cast(param.dtype), act_abs_max.cast(param.dtype), param.cast(param.dtype))
                         else:
                             w_abs_max = param.abs().max(axis=-1, keepdim=True)
                             rw_abs_max = w_abs_max.reshape(act_abs_max.shape)
