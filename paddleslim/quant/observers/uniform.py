@@ -1,4 +1,4 @@
-# Copyright (c) 2023 PaddlePaddle Authors. All Rights Reserved.
+# Copyright (c) 2024 PaddlePaddle Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from paddle.quantization.base_observer import BaseObserver
 
 
 class UniformObserver(BaseObserver):
-    """ This is the base class for a uniform quantization observer, which provides
+    """This is the base class for a uniform quantization observer, which provides
     common functions for calculating the scale and zero-point used in uniform quantization.
     Uniform quantization maps floating point values to integers, where the scale determines
     the step size of the quantizer and the floating point zero is mapped to the zero-point,
@@ -31,14 +31,15 @@ class UniformObserver(BaseObserver):
         symmetric (bool): Whether it is symmetric quantization. the quantization is symmetric.
         In symmetric quantization, the range of floating point values is relaxed to be symmetric
         around zero and the zero-point is always 0.
-         
+
     """
 
     def __init__(
-            self,
-            quant_bits=8,
-            sign=True,
-            symmetric=True, ):
+        self,
+        quant_bits=8,
+        sign=True,
+        symmetric=True,
+    ):
         super(UniformObserver, self).__init__()
         self._quant_bits = quant_bits
         self._sign = sign
@@ -54,14 +55,26 @@ class UniformObserver(BaseObserver):
 
     @property
     def qmin_qmax(self):
-        """ Calculate the range of the quantized integer based on the specified
+        """Calculate the range of the quantized integer based on the specified
         quant_bits, sign, and symmetric properties."""
-        if self._sign:
-            self._qmin = -2**(self.bit_length() - 1)
-            self._qmax = 2**(self.bit_length() - 1) - 1
+        if isinstance(self._quant_bits, tuple):
+            if self._quant_bits[0] == 4 and self._quant_bits[1] == 3 and len(self._quant_bits) == 2:
+                self._qmin = -448.0
+                self._qmax = 448.0
+            elif self._quant_bits[0] == 5 and self._quant_bits[1] == 2 and len(self._quant_bits) == 2:
+                self._qmin = -57344.0
+                self._qmax = 57344.0
+            else:
+                raise NotImplementedError(
+                    "Currently, only float8_e4m3 and float8_e5m2 formats are supported. Please set quant_bits to (4,3) or (5,2) for the corresponding format."
+                )
         else:
-            self._qmin = 0
-            self._qmax = 2**self.bit_length()
+            if self._sign:
+                self._qmin = -(2 ** (self.bit_length() - 1))
+                self._qmax = 2 ** (self.bit_length() - 1) - 1
+            else:
+                self._qmin = 0
+                self._qmax = 2 ** self.bit_length()
         return self._qmin, self._qmax
 
     @abc.abstractmethod

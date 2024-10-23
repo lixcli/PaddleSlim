@@ -28,25 +28,23 @@ CHANNEL_AXIS: Dict[type, int] = {
 
 
 class ChannelWiseObserver(UniformObserver):
-    def __init__(
-            self,
-            layer,
-            quant_bits=8,
-            sign=True,
-            symmetric=True, ):
+    def __init__(self, layer, quant_bits=8, sign=True, symmetric=True, quant_axis=None):
         super(ChannelWiseObserver, self).__init__(
             quant_bits=quant_bits,
             sign=sign,
-            symmetric=symmetric, )
-        self._channel_axis = CHANNEL_AXIS[type(layer)]
+            symmetric=symmetric,
+        )
+        if quant_axis is not None:
+            self._channel_axis = quant_axis
+        else:
+            assert type(layer) in CHANNEL_AXIS, "Unsupported layer type: {}".format(type(layer))
+            self._channel_axis = CHANNEL_AXIS[type(layer)]
         self._quant_bits = quant_bits
 
     def quant_axis(self):
-        """ Return quantization axis.
-        """
+        """Return quantization axis."""
         return self._channel_axis
 
     def bit_length(self):
-        """ Return the bit length of quantized data.
-        """
+        """Return the bit length of quantized data."""
         return self._quant_bits
