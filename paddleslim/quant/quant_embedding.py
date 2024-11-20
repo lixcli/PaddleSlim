@@ -155,8 +155,8 @@ def _clear_var(var_name, scope):
 
 
 def _get_var_dtype(config):
-    return paddle.framework.core.VarDesc.VarType.INT8 if config['dtype'] == 'int8' \
-        else  paddle.framework.core.VarDesc.VarType.INT16
+    return paddle.int8 if config['dtype'] == 'int8' \
+        else  paddle.int16
 
 
 def _quant_embedding_abs_max(graph, scope, place, config, var_name,
@@ -191,7 +191,7 @@ def _quant_embedding_abs_max(graph, scope, place, config, var_name,
             name=_get_dequant_var_name(var_node.name()),
             var_type=var_node.type(),
             shape=var_node.shape(),
-            var_dtype=paddle.framework.core.VarDesc.VarType.FP32)
+            var_dtype=paddle.float32)
         scope.var(dequant_var_node.name())
 
         max_range = (1 << (config['quantize_bits'] - 1)) - 1
@@ -235,7 +235,7 @@ def _quant_embedding_abs_max(graph, scope, place, config, var_name,
         _get_scale_var_name(var_name),
         var_type=embedding_node.type(),
         shape=[1],
-        var_dtype=paddle.framework.core.VarDesc.VarType.FP32)
+        var_dtype=paddle.float32)
     quant_tensor_var = graph.create_persistable_node(
         _get_quant_var_name(var_name),
         var_type=embedding_node.type(),
@@ -322,7 +322,7 @@ def _quant_embedding_log(graph, scope, place, config, var_name, embedding_node):
             name=_get_dequant_var_name(var_node.name()),
             var_type=var_node.type(),
             shape=var_node.shape(),
-            var_dtype=paddle.framework.core.VarDesc.VarType.FP32)
+            var_dtype=paddle.float32)
         scope.var(dequant_var_node.name())
 
         output_ops = var_node.outputs
@@ -354,12 +354,12 @@ def _quant_embedding_log(graph, scope, place, config, var_name, embedding_node):
         _get_dict_var_name(var_name),
         var_type=embedding_node.type(),
         shape=topk_num.shape,
-        var_dtype=paddle.framework.core.VarDesc.VarType.FP32)
+        var_dtype=paddle.float32)
     quant_tensor_var = graph.create_persistable_node(
         _get_quant_var_name(var_name),
         var_type=embedding_node.type(),
         shape=embedding_node.shape(),
-        var_dtype=paddle.framework.core.VarDesc.VarType.INT8)
+        var_dtype=paddle.int8)
     # create var in scope
     scope.var(_get_quant_var_name(var_name))
     scope.var(_get_dict_var_name(var_name))
