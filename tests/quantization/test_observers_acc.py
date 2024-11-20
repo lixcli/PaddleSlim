@@ -33,6 +33,8 @@ from paddleslim.quant.observers.emd import EMDObserverLayer
 from paddleslim.quant.observers.kl import KLObserverLayer
 from paddleslim.quant.observers.mse_weight import MSEChannelWiseWeightObserver
 from paddleslim.quant.observers.abs_max_weight import AbsMaxChannelWiseWeightObserver
+from paddleslim.quant.observers.avg_headwise import AvgHeadwiseObserver, AvgHeadwiseObserverLayer
+from paddleslim.quant.observers.abs_max_headwise import AbsMaxHeadwiseObserver,AbsMaxHeadwiseObserverLayer
 from paddle.nn.quant.format import LinearDequanter, LinearQuanter
 
 import logging
@@ -235,6 +237,8 @@ for _observer in [
         MSEObserver(),
         KLObserver(bins_count=256),
         HistObserver(sign=True, symmetric=True),
+        AbsMaxHeadwiseObserver(quant_axis=0),
+        AvgHeadwiseObserver(quant_axis=0),
 ]:
     observer_suite.addTest(
         TestPTQObserverAcc(

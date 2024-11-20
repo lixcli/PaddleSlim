@@ -28,7 +28,8 @@ from paddleslim.quant.observers.kl import KLObserverLayer
 from paddleslim.quant.observers.mse import MSEObserverLayer
 from paddleslim.quant.observers.avg import AVGObserverLayer
 from paddleslim.quant.observers.emd import EMDObserverLayer
-from paddleslim.quant.observers.kl import KLObserverLayer
+from paddleslim.quant.observers.avg_headwise import AvgHeadwiseObserver, AvgHeadwiseObserverLayer
+from paddleslim.quant.observers.abs_max_headwise import AbsMaxHeadwiseObserver,AbsMaxHeadwiseObserverLayer
 from paddle.nn.quant.format import LinearDequanter, LinearQuanter
 
 
@@ -123,6 +124,13 @@ observer_suite.addTest(
     TestPTQObserver(observer=EMDObserver(), observer_type=EMDObserverLayer))
 observer_suite.addTest(
     TestPTQObserver(observer=MSEObserver(), observer_type=MSEObserverLayer))
+
+observer_suite.addTest(
+    TestPTQObserver(observer=AvgHeadwiseObserver(quant_axis=0), observer_type=AvgHeadwiseObserverLayer))
+
+observer_suite.addTest(
+    TestPTQObserver(observer=AbsMaxHeadwiseObserver(quant_axis=0), observer_type=AbsMaxHeadwiseObserverLayer))
+
 if __name__ == '__main__':
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(observer_suite)
