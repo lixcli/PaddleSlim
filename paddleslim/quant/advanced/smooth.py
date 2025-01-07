@@ -1,4 +1,4 @@
-# Copyright (c) 2023  PaddlePaddle Authors. All Rights Reserved.
+# Copyright (c) 2024  PaddlePaddle Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"
 # you may not use this file except in compliance with the License.
@@ -102,7 +102,6 @@ class Smooth():
         self.ln_linear_dict, self.linear_ln_dict = get_ln_linear_info(
             self.layer_order, self.norm_flag, self.linear_flag, self.fused_qkv,
             self.parallel_ffn, self.skip_norm_list)
-        assert len(self.ln_linear_dict) > 0, 'No LN/Linear pair found'
         for key in self.ln_linear_dict:
             print('smooth pair LN {} : Linear {}'.format(
                 key, self.ln_linear_dict[key]))
@@ -178,7 +177,6 @@ class Smooth():
 
 
     def update_weight(self):
-
         for _, sub_layer in self.model.named_sublayers():
             layer_name = sub_layer.full_name()
             ln_name = None
@@ -187,22 +185,28 @@ class Smooth():
             if type(sub_layer) == ShiftSmoothHelpLayer:
                 ln_name = layer_name
             if ln_name is not None:
-                act_abs_max = self.scale_dict[ln_name].cast("float16")
-                sampled_input = self.sampled_inputs[ln_name].cast("float16")
+                act_abs_max = self.scale_dict[ln_name].cast("float32")
+                sampled_input = self.sampled_inputs[ln_name].cast("float32")
                 for param in sub_layer.parameters(include_sublayers=False):
                     if 'w_0' in param.name:
-                        # weight = param.cast("float32")
+
                         if self.search_function is not None:
                             s = self.search_function.search(
-                                layer_name, sampled_input, act_abs_max, param.cast("float16"))
+                                layer_name, sampled_input, act_abs_max, param.cast("float32"))
                         else:
+                            print(f"[fixed] fixed smooth scale for {layer_name}")
                             w_abs_max = param.abs().max(axis=-1, keepdim=True)
                             rw_abs_max = w_abs_max.reshape(act_abs_max.shape)
                             act_abs_max_tmp = act_abs_max.detach().clone()
                             s = paddle.clip(paddle.pow(act_abs_max_tmp, self.alpha) / paddle.pow(
                                 rw_abs_max, 1 - self.alpha), min=1e-5)
-
-                        self.smooth_scale_dict[ln_name] = s.cast(param.dtype)
+                        
+                        # when there are multiple linears corresponding to one LN layer, merge them together by using the minimum value
+                        s = s.cast(param.dtype)
+                        if ln_name in self.smooth_scale_dict:
+                            self.smooth_scale_dict[ln_name] = paddle.where(self.smooth_scale_dict[ln_name]>s, s, self.smooth_scale_dict[ln_name])
+                        else:
+                            self.smooth_scale_dict[ln_name] = s
                         break
 
         # update linear weight
@@ -215,13 +219,11 @@ class Smooth():
                         print("[smooth] before linear [{}] weight, abs_max: {}".
                               format(param.name,
                                      float(param.cast("float32").abs().max())))
-                        param_tmp = param * self.smooth_scale_dict[
-                            ln_name].transpose(perm=[1, 0])
+                        param_tmp = param * self.smooth_scale_dict[ln_name].transpose(perm=[1, 0])
                         paddle.assign(param_tmp, output=param)
                         print("[smooth] after linear [{}] weight, abs_max: {}".
                               format(param.name,
-                                     float(param_tmp.abs().max().cast(
-                                         "float32"))))
+                                     float(param_tmp.cast("float32").abs().max())))
 
         # update LN weight
         for cur_name, sub_layer in self.model.named_sublayers():
