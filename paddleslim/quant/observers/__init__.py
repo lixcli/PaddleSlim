@@ -21,7 +21,7 @@ from .abs_max import AbsmaxObserver
 from .mse_weight import MSEChannelWiseWeightObserver
 from .abs_max_weight import AbsMaxChannelWiseWeightObserver
 from .groupwise import GroupWiseWeightObserver
-
+from .abs_max_tokenwise import AbsmaxTokenwiseObserver
 __all__ = [
     "HistObserver",
     "KLObserver",
@@ -32,5 +32,6 @@ __all__ = [
     "AbsmaxObserver",
     "MSEChannelWiseWeightObserver",
     "AbsMaxChannelWiseWeightObserver",
-    "GroupWiseWeightObserver"
+    "GroupWiseWeightObserver",
+    "AbsmaxTokenwiseObserver"
 ]
