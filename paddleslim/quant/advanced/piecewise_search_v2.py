@@ -139,8 +139,7 @@ class PieceWiseSearchV2():
                         mask_for_ones_new = paddle.where(           # NOTE: This line mean that skip the elements which has been search.
                             smooth_scale_out == 0., 1., 0.)
                         mask_for_ones *= mask_for_ones_new.cast(dtype)
-                        # mask_for_search *= mask_for_ones_new.cast(dtype)
-                        # smooth_scale = smooth_scale * mask_for_search
+                        
                         smooth_scale_ = smooth_scale_out + smooth_scale
                         smooth_scale_tmp = smooth_scale_ + mask_for_ones
                         
