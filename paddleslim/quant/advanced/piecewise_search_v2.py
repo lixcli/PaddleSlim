@@ -17,7 +17,7 @@ import numpy as np
 from .utils import compute_scales, k_means
 from .metrics import mse_loss
 
-__all__ = ['PieceWiseSearch']
+__all__ = ['PieceWiseSearchV2']
 
 
 class PieceWiseSearchV2():
